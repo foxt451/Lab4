@@ -2,12 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace LZWArchiver
 {
-    class FileWriter
+    public class FileWriter : IDisposable
     {
+        private BinaryWriter writer;
+
+        public FileWriter(string filePath)
+        {
+            writer = new FileLoader().LoadFileBinaryWriter(filePath);
+        }
+
+
         // in cases when we want to write only 3 bits to file
         // or 12 bits.. we can't do it, because it can't be split into bytes
         // we could write, for example, three bits 110 as 00000110, but
@@ -19,8 +28,11 @@ namespace LZWArchiver
         // on further writings this byte will eventually get complete and written down to the stream
         byte previous = 0x00;
         int filledBits = 0;
+        private bool disposedValue = false;
+
         public void WriteBits(int a, int numberOfBits)
         {
+            if (disposedValue) return;
 
             while (numberOfBits != 0)
             {
@@ -30,10 +42,10 @@ namespace LZWArchiver
                 if (numberOfBits >= remainingBits)
                 {
                     previous |= (byte)(a >> (numberOfBits - remainingBits) & (0xFF >> (filledBits)));
-                    // update 'a', 'previous' and output the byte
-                    a >>= (numberOfBits - remainingBits);
+                    // update 'numberOfBits', 'previous' and output the byte
                     numberOfBits -= remainingBits;
-                    Console.WriteLine($"Output byte {previous}");
+                    // Console.WriteLine($"Output byte {previous}");
+                    writer.Write(previous);
                     previous = 0x00;
                     filledBits = 0;
                 }
@@ -41,10 +53,39 @@ namespace LZWArchiver
                 {
                     previous |= (byte)(a << (remainingBits - numberOfBits) & (0xFF >> (filledBits)));
                     filledBits += numberOfBits;
-                    Console.WriteLine($"This was not enough to output the whole byte... Completed by {numberOfBits} bits");
+                    // Console.WriteLine($"This was not enough to output the whole byte... Completed by {numberOfBits} bits");
                     numberOfBits = 0;
                 }
             }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    writer.Close();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~FileWriter()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

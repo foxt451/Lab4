@@ -7,12 +7,18 @@ using System.IO;
 
 namespace LZWArchiver
 {
-    class FileLoader
+    public class FileLoader
     {
         public BinaryReader LoadFileBinaryReader(string filePath)
         {
             BinaryReader reader = new(new FileStream(filePath, FileMode.Open));
             return reader;
+        }
+
+        public BinaryWriter LoadFileBinaryWriter(string filePath)
+        {
+            BinaryWriter writer = new(new FileStream(filePath, FileMode.Create));
+            return writer;
         }
     }
 }

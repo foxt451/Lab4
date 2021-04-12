@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LZWArchiver", "LZWArchiver\LZWArchiver.csproj", "{89346972-68DE-4EA8-AF5F-547636590CDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LZWArchiver", "LZWArchiver\LZWArchiver.csproj", "{89346972-68DE-4EA8-AF5F-547636590CDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LZWArchiver.UnitTests", "LZWArchiver.UnitTests\LZWArchiver.UnitTests.csproj", "{72B134C0-65ED-4540-A124-3DF6BE614514}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{89346972-68DE-4EA8-AF5F-547636590CDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89346972-68DE-4EA8-AF5F-547636590CDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89346972-68DE-4EA8-AF5F-547636590CDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72B134C0-65ED-4540-A124-3DF6BE614514}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72B134C0-65ED-4540-A124-3DF6BE614514}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72B134C0-65ED-4540-A124-3DF6BE614514}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72B134C0-65ED-4540-A124-3DF6BE614514}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

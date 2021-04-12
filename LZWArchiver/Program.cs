@@ -6,7 +6,7 @@ namespace LZWArchiver
     {
         static void Main(string[] args)
         {
-            
+            new Encoder("test.bin", "out.bin").Encode();
         }
     }
 }

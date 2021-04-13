@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
 using LZWArchiver;
 
 namespace LZWArchiver
@@ -24,13 +26,16 @@ namespace LZWArchiver
                 {
                     file.WriteType(path, ListOfInputFile[i]);
                 }
-                
+                new Encoder(path+ListOfInputFile[0], path+NameFileOutput).Encode();
+                //File.Delete(path+ListOfInputFile[0]);
             }
+            //new Encoder("test.txt", "out.txt").Encode();
             else if (command[0] == "--decompress")
             {
                 string NameInpFile = command[1]; // .lzw
+                new Decoder(path+NameInpFile, "recovered.txt").Decode();
                 FileWork file = new FileWork();
-                string NameOutpFile = file.ReadType(path + NameInpFile); // .exe and etc
+                file.ReadType(path + "recovered.txt"); // .exe and etc
             }
             else
             {

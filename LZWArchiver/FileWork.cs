@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Enumeration;
 using System.Linq;
 using System.Text;
@@ -15,19 +16,23 @@ namespace LZWArchiver
             }
         }
 
-        public string ReadType(string path)
+        public void ReadType(string path)
         {
             string filename = "";
             using (StreamReader rd = new StreamReader(path))
             {
-                rd.ReadLine();
-                filename = rd.ReadLine();
+                while (!rd.EndOfStream)
+                {
+                    filename = rd.ReadLine();
+                }
             }
-            FileStream file = new FileStream(path + "/rating.csv", FileMode.OpenOrCreate);
-            File.WriteAllLines(file, 
-                File.ReadLines(file).Where(l => l != filename).ToList());
+            var tempFile = Path.GetTempFileName();
+            var linesToKeep = File.ReadLines(path).Where(l => l != filename);
 
-            return filename;
+            File.WriteAllLines(tempFile, linesToKeep);
+
+            File.Delete(path);
+            File.Move(tempFile, filename);
         }
     }
 }

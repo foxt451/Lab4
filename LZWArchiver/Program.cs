@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace LZWArchiver
 {
@@ -6,7 +7,8 @@ namespace LZWArchiver
     {
         static void Main(string[] args)
         {
-            new Encoder("test.bin", "out.bin").Encode();
+            new Encoder("test.txt", "out.txt").Encode();
+            new Decoder("out.txt", "recovered.txt").Decode();
         }
     }
 }

@@ -54,11 +54,23 @@ namespace LZWArchiver
                 List<byte> previousSequence = sequence;
                 while (input.HasBits(wordSizeInBits))
                 {
+                    if (codeTable.Count >= (int)Math.Pow(2, wordSizeInBits))
+                    {
+                        wordSizeInBits++;
+                    }
                     readByte = input.ReadBits(wordSizeInBits);
-                    sequence = codeTable[readByte];
+                    if (!codeTable.ContainsKey(readByte))
+                    {
+                        sequence = new List<byte>(previousSequence);
+                        sequence.Add(previousSequence[0]);
+                    }
+                    else
+                    {
+                        sequence = codeTable[readByte];
+                    }
                     foreach (var seq in sequence)
                     {
-                        output.WriteBits(seq, wordSizeInBits);
+                        output.WriteBits(seq, 8);
                     }
 
                     List<byte> newSequence = new List<byte>(previousSequence);
@@ -70,11 +82,6 @@ namespace LZWArchiver
                     //sequence.Add(seq);
                     //}
                     // if the newly obtained sequence doesn't have its own code yet
-
-                    if (codeTable.Count > (int) Math.Pow(2, wordSizeInBits))
-                    {
-                        wordSizeInBits++;
-                    }
                 }
 
                 // when we have reached EOF, we still might have some remaining sequence of bytes 

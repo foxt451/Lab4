@@ -31,7 +31,7 @@ namespace LZWArchiver
         {
             if (disposedValue)
             {
-                throw new ObjectDisposedException("object are disposed");
+                throw new ObjectDisposedException("object is disposed");
             }
 
             int result = 0;
@@ -39,9 +39,11 @@ namespace LZWArchiver
             {
                 result |= previous;
                 numberOfBits -= saveBits;
-                if (numberOfBits > 0)
+                if (numberOfBits >= 0)
                 {
                     result = result << numberOfBits;
+                    previous = 0x00;
+                    saveBits = 0;
                 }
                 else if(numberOfBits < 0)
                 {
@@ -63,7 +65,7 @@ namespace LZWArchiver
                 {
                     previous |= (byte)(a & (0xFF >> (8+numberOfBits)));
                     saveBits = -numberOfBits;
-                    a = a >> (8 + numberOfBits);
+                    a = a >> (-numberOfBits);
                 }
                 result|=a;
 
@@ -75,7 +77,7 @@ namespace LZWArchiver
         public bool HasBits(int NumberOfBits)
         {
             long leftBytes = reader.BaseStream.Length - reader.BaseStream.Position;
-            if (leftBytes*8 >= NumberOfBits)
+            if (leftBytes*8 + saveBits >= NumberOfBits)
             {
                 return true;
             }

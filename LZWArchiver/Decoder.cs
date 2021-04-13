@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 
 namespace LZWArchiver
 {
-    class Encoder
+    public class Decoder
     {
         // codeTable stores corresponding codes for (possibly repeated) sequences of bytes
-        private Dictionary<List<byte>, int> codeTable = new (new ListComparer<byte>());
+        private Dictionary<int, List<byte>> codeTable = new Dictionary<int, List<byte>>();
 
         // variable-length codes for words (sequences of bytes) are used
         // if, at first, the length of the codes is 8 bits per code
@@ -19,7 +17,7 @@ namespace LZWArchiver
         private int wordSizeInBits = 8;
 
         private string inputFile, outputFile;
-        public Encoder(string inputFile, string outputFile)
+        public Decoder(string inputFile, string outputFile)
         {
             this.inputFile = inputFile;
             this.outputFile = outputFile;
@@ -28,40 +26,61 @@ namespace LZWArchiver
             // the codeTable will be expanded later, during the runtime
             for (int i = 0; i < 256; i++)
             {
-                List<byte> entry = new() { (byte)i };
-                codeTable[entry] = i;
+                List<byte> entry = new List<byte>() { (byte)i };
+                codeTable[i] = entry;
+                //codeTable[i].AddRange(Convert.ToString(i, 2).PadRight(8, '0').ToCharArray()
+                    //.Select(c => (byte) Char.GetNumericValue(c)));
+
             }
         }
-        public void Encode()
+
+        public void Decode()
         {
             // FileWriter provides us with a possibility to write not only whole bytes,
             // but, also, any number of bits
-            using (FileWriter output = new(outputFile))
-            using (BinaryReader input = new FileLoader().LoadFileBinaryReader(inputFile))
+            using (FileWriter output = new (outputFile))
+            using (FileReader input = new FileReader(inputFile))
             {
                 // current sequence of read bytes
-                List<byte> sequence = new();
-                // read until end of file
-                while (input.BaseStream.Position != input.BaseStream.Length)
+                int readByte = input.ReadBits(wordSizeInBits);
+                List<byte> sequence = codeTable[readByte];
+                //var oBuf = new List<byte>(windw);
+                foreach (var currentByte in sequence)
                 {
-                    byte readByte = input.ReadByte();
-                    // add the read byte to the sequence
-                    sequence.Add(readByte);
+                    output.WriteBits(currentByte, 8);
+                }
+
+                // read until end of file
+                List<byte> previousSequence = sequence;
+                while (input.HasBits(wordSizeInBits))
+                {
+                    readByte = input.ReadBits(wordSizeInBits);
+                    sequence = codeTable[readByte];
+                    foreach (var seq in sequence)
+                    {
+                        output.WriteBits(seq, wordSizeInBits);
+                    }
+                    List<byte> newSequence = new List<byte>(previousSequence);
+                    newSequence.Add(sequence[0]);
+                    //foreach (var seq in codeTable[readByte])
+                    //{
+                        //sequence.Add(seq);
+                    //}
                     // if the newly obtained sequence doesn't have its own code yet
-                    if (!codeTable.ContainsKey(sequence))
+                    if (!codeTable.ContainsKey(readByte))
                     {
                         // add new code to codeTable
                         codeTable.Add(new List<byte>(sequence), codeTable.Count);
 
                         // output the word (without the last read byte)
-                        sequence.RemoveAt(sequence.Count - 1);
+                        sequence.RemoveAt(0);
                         output.WriteBits(codeTable[sequence], wordSizeInBits);
                         // set the sequence to contain only the last read byte
-                        sequence = new() { readByte };
+                        sequence = new () {readByte};
 
                         // change bit number, if the table is filled
                         // so that we have enough of bits to write all codes in the table
-                        if (codeTable.Count > (int)Math.Pow(2, wordSizeInBits))
+                        if (codeTable.Count > (int) Math.Pow(2, wordSizeInBits))
                         {
                             wordSizeInBits++;
                         }
@@ -73,6 +92,7 @@ namespace LZWArchiver
                 {
                     // output the remaining sequence
                     output.WriteBits(codeTable[sequence], wordSizeInBits);
+                    //sequence = new List<byte>();
                 }
             }
         }

@@ -17,6 +17,7 @@ namespace LZWArchiver
         private int wordSizeInBits = 8;
 
         private string inputFile, outputFile;
+
         public Decoder(string inputFile, string outputFile)
         {
             this.inputFile = inputFile;
@@ -26,11 +27,10 @@ namespace LZWArchiver
             // the codeTable will be expanded later, during the runtime
             for (int i = 0; i < 256; i++)
             {
-                List<byte> entry = new List<byte>() { (byte)i };
-                codeTable[i] = entry;
+                List<byte> entry = new List<byte>() {(byte) i};
+                codeTable.Add(i, entry);
                 //codeTable[i].AddRange(Convert.ToString(i, 2).PadRight(8, '0').ToCharArray()
-                    //.Select(c => (byte) Char.GetNumericValue(c)));
-
+                //.Select(c => (byte) Char.GetNumericValue(c)));
             }
         }
 
@@ -60,40 +60,24 @@ namespace LZWArchiver
                     {
                         output.WriteBits(seq, wordSizeInBits);
                     }
+
                     List<byte> newSequence = new List<byte>(previousSequence);
                     newSequence.Add(sequence[0]);
+                    codeTable.Add(codeTable.Count, newSequence);
+                    previousSequence = sequence;
                     //foreach (var seq in codeTable[readByte])
                     //{
-                        //sequence.Add(seq);
+                    //sequence.Add(seq);
                     //}
                     // if the newly obtained sequence doesn't have its own code yet
-                    if (!codeTable.ContainsKey(readByte))
+
+                    if (codeTable.Count > (int) Math.Pow(2, wordSizeInBits))
                     {
-                        // add new code to codeTable
-                        codeTable.Add(new List<byte>(sequence), codeTable.Count);
-
-                        // output the word (without the last read byte)
-                        sequence.RemoveAt(0);
-                        output.WriteBits(codeTable[sequence], wordSizeInBits);
-                        // set the sequence to contain only the last read byte
-                        sequence = new () {readByte};
-
-                        // change bit number, if the table is filled
-                        // so that we have enough of bits to write all codes in the table
-                        if (codeTable.Count > (int) Math.Pow(2, wordSizeInBits))
-                        {
-                            wordSizeInBits++;
-                        }
+                        wordSizeInBits++;
                     }
                 }
 
                 // when we have reached EOF, we still might have some remaining sequence of bytes 
-                if (sequence.Count != 0)
-                {
-                    // output the remaining sequence
-                    output.WriteBits(codeTable[sequence], wordSizeInBits);
-                    //sequence = new List<byte>();
-                }
             }
         }
     }

@@ -67,7 +67,10 @@ namespace LZWArchiver
                 {
                     // write down previous, even if it's not filled
                     // in that case, we'll have some unnecessary zeroes at the end of the file
-                    writer.Write(previous);
+                    if (filledBits != 0)
+                    {
+                        writer.Write(previous);
+                    }
                     writer.Close();
                 }
 

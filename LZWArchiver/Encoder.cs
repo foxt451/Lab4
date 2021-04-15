@@ -58,7 +58,7 @@ namespace LZWArchiver
                         // set the sequence to contain only the last read byte
                         sequence = new() { readByte };
 
-                        codeTable.UpdateWordSize(1);
+                        codeTable.UpdateWordSize(1, 1);
                     }
                 }
 

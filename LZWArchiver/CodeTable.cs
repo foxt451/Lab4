@@ -15,7 +15,7 @@ namespace LZWArchiver
         } = 8;
         protected int maxWordSize = 16;
 
-        protected Dictionary<KeyType, ValueType> codeTable = new();
+        protected Dictionary<KeyType, ValueType> codeTable;
 
         public CodeTable()
         {
@@ -33,20 +33,31 @@ namespace LZWArchiver
 
         // we may want to update the code size not immediately, but, for example, 1 iteration after
         // delay tells how many iterations later an update will take place
-        public void UpdateWordSize(int delay=0)
+
+        // returns true if the table was reset
+        // bool value needed for decoder
+
+        private void ResetCodeTable()
+        {
+            InitCodeTable();
+            wordSizeInBits = 8;
+        }
+
+        public bool UpdateWordSize(int wordSizeUpdateDelay=0, int tableResetDelay = 0)
         {
             // change bit number, if the table is filled
             // so that we have enough of bits to write all codes in the table
-            if (codeTable.Count - delay >= (int)Math.Pow(2, wordSizeInBits))
+            if (codeTable.Count - wordSizeUpdateDelay >= (int)Math.Pow(2, wordSizeInBits))
             {
-                //if (codeTable.Count >= (int)Math.Pow(2, maxWordSize))
-                //{
-                //    // reset codeTable
-                //    InitCodeTable();
-                //    wordSizeInBits = 8;
-                //}
                 wordSizeInBits++;
             }
+            if (codeTable.Count - tableResetDelay >= (int)Math.Pow(2, maxWordSize))
+            {
+                // reset codetable
+                ResetCodeTable();
+                return true;
+            }
+            return false;
         }
     }
 }

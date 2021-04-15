@@ -7,8 +7,8 @@ namespace LZWArchiver
     {
         static void Main(string[] args)
         {
-            new Encoder("tst.txt", "out.zip").Encode();
-            new Decoder("out.zip", "tstR.txt").Decode();
+            new Encoder("big.bmp", "big.zip").Encode();
+            new Decoder("big.zip", "bigR.bmp").Decode();
         }
     }
 }

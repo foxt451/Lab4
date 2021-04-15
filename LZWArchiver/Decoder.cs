@@ -39,12 +39,13 @@ namespace LZWArchiver
                     output.WriteBits(currentByte, 8);
                 }
 
-                // read until end of file
                 List<byte> previousSequence = sequence;
                 int decodedBytes = 1;
+                // read until end of file
+                codeTable.UpdateWordSize(0, 0);
                 while (input.HasBits(codeTable.wordSizeInBits))
                 {
-                    codeTable.UpdateWordSize();
+                    bool reset = codeTable.UpdateWordSize(0, 0);
                     readByte = input.ReadBits(codeTable.wordSizeInBits);
                     if (!codeTable.ContainsKey(readByte))
                     {
@@ -69,9 +70,12 @@ namespace LZWArchiver
                         }
                     }
 
-                    List<byte> newSequence = new List<byte>(previousSequence);
-                    newSequence.Add(sequence[0]);
-                    codeTable.Add(newSequence);
+                    if (!reset)
+                    {
+                        List<byte> newSequence = new List<byte>(previousSequence);
+                        newSequence.Add(sequence[0]);
+                        codeTable.Add(newSequence);
+                    }
                     previousSequence = sequence;
                     //foreach (var seq in codeTable[readByte])
                     //{

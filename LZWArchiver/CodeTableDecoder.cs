@@ -10,6 +10,7 @@ namespace LZWArchiver
     {
         public override void InitCodeTable()
         {
+            codeTable = new();
             // we initialize our codeTable with codes for all 256 bytes
             // the codeTable will be expanded later, during the runtime
             for (int i = 0; i < 256; i++)

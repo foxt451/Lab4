@@ -8,13 +8,12 @@ namespace LZWArchiver
     public class Decoder
     {
         // codeTable stores corresponding codes for (possibly repeated) sequences of bytes
-        private Dictionary<int, List<byte>> codeTable = new Dictionary<int, List<byte>>();
+        private CodeTableDecoder codeTable = new();
 
         // variable-length codes for words (sequences of bytes) are used
         // if, at first, the length of the codes is 8 bits per code
         // then, each time the size of the dictionary exceeds 2^wordSizeInBits
         // we add 1 additional bit to the size of the codes
-        private int wordSizeInBits = 8;
 
         private string inputFile, outputFile;
 
@@ -22,16 +21,6 @@ namespace LZWArchiver
         {
             this.inputFile = inputFile;
             this.outputFile = outputFile;
-
-            // we initialize our codeTable with codes for all 256 bytes
-            // the codeTable will be expanded later, during the runtime
-            for (int i = 0; i < 256; i++)
-            {
-                List<byte> entry = new List<byte>() {(byte) i};
-                codeTable.Add(i, entry);
-                //codeTable[i].AddRange(Convert.ToString(i, 2).PadRight(8, '0').ToCharArray()
-                //.Select(c => (byte) Char.GetNumericValue(c)));
-            }
         }
 
         public void Decode()
@@ -42,7 +31,7 @@ namespace LZWArchiver
             using (FileReader input = new FileReader(inputFile))
             {
                 // current sequence of read bytes
-                int readByte = input.ReadBits(wordSizeInBits);
+                int readByte = input.ReadBits(codeTable.wordSizeInBits);
                 List<byte> sequence = codeTable[readByte];
                 //var oBuf = new List<byte>(windw);
                 foreach (var currentByte in sequence)
@@ -52,17 +41,17 @@ namespace LZWArchiver
 
                 // read until end of file
                 List<byte> previousSequence = sequence;
-                while (input.HasBits(wordSizeInBits))
+                int decodedBytes = 1;
+                while (input.HasBits(codeTable.wordSizeInBits))
                 {
-                    if (codeTable.Count >= (int)Math.Pow(2, wordSizeInBits))
-                    {
-                        wordSizeInBits++;
-                    }
-                    readByte = input.ReadBits(wordSizeInBits);
+                    codeTable.UpdateWordSize();
+                    readByte = input.ReadBits(codeTable.wordSizeInBits);
                     if (!codeTable.ContainsKey(readByte))
                     {
-                        sequence = new List<byte>(previousSequence);
-                        sequence.Add(previousSequence[0]);
+                        sequence = new(previousSequence)
+                        {
+                            previousSequence[0]
+                        };
                     }
                     else
                     {
@@ -71,11 +60,18 @@ namespace LZWArchiver
                     foreach (var seq in sequence)
                     {
                         output.WriteBits(seq, 8);
+
+                        // debug
+                        decodedBytes++;
+                        if (decodedBytes % (1024 * 1024) == 0)
+                        {
+                            Console.WriteLine($"Decoded {decodedBytes / (1024 * 1024)} MBs");
+                        }
                     }
 
                     List<byte> newSequence = new List<byte>(previousSequence);
                     newSequence.Add(sequence[0]);
-                    codeTable.Add(codeTable.Count, newSequence);
+                    codeTable.Add(newSequence);
                     previousSequence = sequence;
                     //foreach (var seq in codeTable[readByte])
                     //{
@@ -83,6 +79,7 @@ namespace LZWArchiver
                     //}
                     // if the newly obtained sequence doesn't have its own code yet
                 }
+                Console.WriteLine("Decoding complete!");
 
                 // when we have reached EOF, we still might have some remaining sequence of bytes 
             }

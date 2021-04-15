@@ -74,9 +74,19 @@ namespace LZWArchiver
             return result;
         }
 
+        public long GetBytesLeftInFile()
+        {
+            return reader.BaseStream.Length - reader.BaseStream.Position;
+        }
+
+        public long GetBytesTotalInFile()
+        {
+            return reader.BaseStream.Length;
+        }
+
         public bool HasBits(int NumberOfBits)
         {
-            long leftBytes = reader.BaseStream.Length - reader.BaseStream.Position;
+            long leftBytes = GetBytesLeftInFile();
             if (leftBytes*8 + saveBits >= NumberOfBits)
             {
                 return true;

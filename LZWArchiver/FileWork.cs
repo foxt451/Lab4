@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Enumeration;
 using System.Linq;
@@ -8,11 +9,14 @@ namespace LZWArchiver
 {
     public class FileWork
     {
-        public void WriteType(string path, string name)
+        public void WriteType(string path, List<string> NameOfFile)
         {
-            using (StreamWriter sw = new StreamWriter(path+name, true, System.Text.Encoding.Default))
+            for (int i = 0; i < NameOfFile.Count; i++)
             {
-                sw.WriteLine(name);
+                using (StreamWriter sw = new StreamWriter(path + "/" +NameOfFile[i], true, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(NameOfFile[i]);
+                }
             }
         }
 

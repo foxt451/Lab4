@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Enumeration;
 using System.Linq;
+using System.Net;
 using System.Text;
 
 namespace LZWArchiver
@@ -13,30 +14,49 @@ namespace LZWArchiver
         {
             for (int i = 0; i < NameOfFile.Count; i++)
             {
-                using (StreamWriter sw = new StreamWriter(path + "/" +NameOfFile[i], true, System.Text.Encoding.Default))
+                string[] tempStringOutFile = File.ReadAllLines(path + NameOfFile[i]);
+                using (StreamWriter sw = new StreamWriter(path + "MergeFile.txt", true, System.Text.Encoding.Default))
                 {
-                    sw.WriteLine(NameOfFile[i]);
+                    for (int j = 0; j < tempStringOutFile.Length; j++)
+                    {
+                        sw.WriteLine(tempStringOutFile[j]);
+                    }
+
+                    sw.WriteLine("!" + NameOfFile[i]);
                 }
+
+                File.Delete(path + NameOfFile[i]);
             }
         }
 
         public void ReadType(string path)
         {
             string filename = "";
-            using (StreamReader rd = new StreamReader(path))
+            using (StreamReader rd = new StreamReader(path + "recovered.txt"))
             {
                 while (!rd.EndOfStream)
                 {
-                    filename = rd.ReadLine();
+                    string tempLine = rd.ReadLine();
+                    if (tempLine.Length != 0 && tempLine[0] == '!')
+                    {
+                        for (int j = 1; j < tempLine.Length; j++)
+                        {
+                            filename += tempLine[j];
+                        }
+
+                        File.Move(path + "tempFile.txt", filename);
+                        filename = "";
+                    }
+                    else
+                    {
+                        using (StreamWriter sw = new StreamWriter(path + "tempFile.txt", true,
+                            System.Text.Encoding.Default))
+                        {
+                            sw.WriteLine(tempLine);
+                        }
+                    }
                 }
             }
-            var tempFile = Path.GetTempFileName();
-            var linesToKeep = File.ReadLines(path).Where(l => l != filename);
-
-            File.WriteAllLines(tempFile, linesToKeep);
-
-            File.Delete(path);
-            File.Move(tempFile, filename);
         }
     }
 }

@@ -25,8 +25,8 @@ namespace LZWArchiver
                 
                 file.WriteType(path, ListOfInputFile);
                
-                new Encoder(path+ListOfInputFile[0], path+NameFileOutput).Encode();
-                File.Delete(path+ListOfInputFile[0]);
+                new Encoder(path+"MergeFile.txt", path+NameFileOutput).Encode();
+                File.Delete(path+"MergeFile.txt");
             }
             //new Encoder("test.txt", "out.txt").Encode();
             else if (args[0] == "--decompress")
@@ -34,8 +34,9 @@ namespace LZWArchiver
                 string NameInpFile = args[1]; // .lzw
                 new Decoder(path+NameInpFile, path+"recovered.txt").Decode();
                 FileWork file = new FileWork();
-                file.ReadType(path+"recovered.txt"); // .exe and etc
+                file.ReadType(path); // .exe and etc
                 File.Delete(path+NameInpFile);
+                File.Delete(path+"recovered.txt");
             }
             else
             {

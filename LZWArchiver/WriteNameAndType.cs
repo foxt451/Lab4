@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -7,29 +8,32 @@ namespace LZWArchiver
 {
     public class WriteNameAndType
     {
-        public WriteNameAndType(string path, string name, Encoding encoding)
+        public static void WriteNAT(string path, List<string> listOfName, Encoding encoding)
         {
-            FileInfo file = new FileInfo(path+name);
-            long sizeFile = file.Length;
-            using (BinaryReader copyFile = new(new FileStream(path + name, FileMode.Open)))
+            for (int i = 0; i < listOfName.Count; i++)
             {
-                using (BinaryWriter writer = new(new FileStream(path+name+"1", FileMode.Append)))
+                FileInfo file = new FileInfo(path + listOfName[i]);
+                long sizeFile = file.Length;
+                using (BinaryReader copyFile = new(new FileStream(path + listOfName[i], FileMode.Open)))
                 {
-                    writer.Write(sizeFile);
-                    byte[] NameFile = encoding.GetBytes(name);
-                    writer.Write(NameFile.Length);
-                    for (int i = 0; i < NameFile.Length; i++)
+                    using (BinaryWriter writer = new(new FileStream(path + "writetype.bin", FileMode.Append)))
                     {
-                        writer.Write(NameFile[i]);
-                    }
-                    while (copyFile.BaseStream.Position != copyFile.BaseStream.Length)
-                    {
-                        writer.Write(copyFile.ReadByte());
+                        writer.Write(sizeFile);
+                        byte[] NameFile = encoding.GetBytes(listOfName[i]);
+                        writer.Write(NameFile.Length);
+                        for (int j = 0; j < NameFile.Length; j++)
+                        {
+                            writer.Write(NameFile[j]);
+                        }
+
+                        while (copyFile.BaseStream.Position != copyFile.BaseStream.Length)
+                        {
+                            writer.Write(copyFile.ReadByte());
+                        }
                     }
                 }
+                //File.Delete(path + listOfName[i]);
             }
-            File.Delete(path+name);
-            File.Move(path+name+"1", name);
         }
     }
 }

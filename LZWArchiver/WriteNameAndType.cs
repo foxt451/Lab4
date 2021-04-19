@@ -7,22 +7,21 @@ namespace LZWArchiver
 {
     public class WriteNameAndType
     {
-        public WriteNameAndType(string path, string name)
+        public WriteNameAndType(string path, string name, Encoding encoding)
         {
             FileInfo file = new FileInfo(path+name);
             long sizeFile = file.Length;
             using (BinaryReader copyFile = new(new FileStream(path + name, FileMode.Open)))
             {
-                using (BinaryWriter writer = new(new FileStream(path+name+"1", FileMode.Create)))
+                using (BinaryWriter writer = new(new FileStream(path+name+"1", FileMode.Append)))
                 {
                     writer.Write(sizeFile);
-                    Encoding u = new ASCIIEncoding();
-                    byte[] NameFile = u.GetBytes(name);
+                    byte[] NameFile = encoding.GetBytes(name);
+                    writer.Write(NameFile.Length);
                     for (int i = 0; i < NameFile.Length; i++)
                     {
                         writer.Write(NameFile[i]);
                     }
-                    writer.Write(0);
                     while (copyFile.BaseStream.Position != copyFile.BaseStream.Length)
                     {
                         writer.Write(copyFile.ReadByte());

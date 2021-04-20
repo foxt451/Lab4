@@ -84,6 +84,21 @@ namespace LZWArchiver
             return reader.BaseStream.Length;
         }
 
+        public long Read64()
+        {
+            return reader.ReadInt64();
+        }
+
+        public int Read32()
+        {
+            return reader.ReadInt32();
+        }
+
+        public byte Read8()
+        {
+            return reader.ReadByte();
+        }
+
         public bool HasBits(int NumberOfBits)
         {
             long leftBytes = GetBytesLeftInFile();

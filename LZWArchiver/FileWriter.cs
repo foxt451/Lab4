@@ -11,9 +11,9 @@ namespace LZWArchiver
     {
         private BinaryWriter writer;
 
-        public FileWriter(string filePath)
+        public FileWriter(string filePath, FileMode filemode = FileMode.Create)
         {
-            writer = new FileLoader().LoadFileBinaryWriter(filePath);
+            writer = new FileLoader().LoadFileBinaryWriter(filePath, filemode);
         }
 
 

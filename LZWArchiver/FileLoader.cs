@@ -15,9 +15,9 @@ namespace LZWArchiver
             return reader;
         }
 
-        public BinaryWriter LoadFileBinaryWriter(string filePath)
+        public BinaryWriter LoadFileBinaryWriter(string filePath, FileMode filemode = FileMode.Create)
         {
-            BinaryWriter writer = new(new FileStream(filePath, FileMode.Create));
+            BinaryWriter writer = new(new FileStream(filePath, filemode));
             return writer;
         }
     }

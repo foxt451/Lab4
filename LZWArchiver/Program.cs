@@ -12,7 +12,7 @@ namespace LZWArchiver
         {
             Encoding encoding = new UnicodeEncoding();
             //args = new string[] {"--compress", "dada.lzw", "Encode.txt", "Encode2.txt"};
-            //args = new string[] {"--decompress", "dada.lzw"};//f - 101 0
+            args = new string[] {"--decompress", "dada.lzw"};//f - 101 0
             //new Encoder("wave1.ogg", "big.zip").Encode();
             //new Decoder("big.zip", "wave2.ogg").Decode();
             string path = Directory.GetCurrentDirectory()+"/";
@@ -22,18 +22,14 @@ namespace LZWArchiver
                 List<string> listOfNameFile = new List<string>();
                 for (int i = 2; i < args.Length; i++)
                 {
-                    listOfNameFile.Add(args[i]);
+                    WriteNameAndType.WriteNAT(path, args[i], NameFileOutput, encoding);
+                    new Encoder(path+args[i], path+NameFileOutput).Encode();
                 }
-                WriteNameAndType.WriteNAT(path, listOfNameFile, encoding);
-                new Encoder(path+"writetype.bin", path+NameFileOutput).Encode();
-                File.Delete(path+"writetype.bin");
             }
             else if (args[0] == "--decompress")
             {
-                string NameInpFile = args[1]; // .lzw
-                new Decoder(path+NameInpFile, path+"decoding.bin").Decode();
-                ReadNameAndType.ReadNAT(path, "decoding.bin", encoding);
-                File.Delete(path+"decoding.bin");
+                string NameInpFile = args[1]; // .lzwLZW
+                new Decoder(path+NameInpFile, path, encoding).Decode();
             }
             else
             {

@@ -31,7 +31,7 @@ namespace LZWArchiver
         {
             // FileWriter provides us with a possibility to write not only whole bytes,
             // but, also, any number of bits
-            using (FileWriter output = new(outputFile, FileMode.OpenOrCreate))
+            using (FileWriter output = new(outputFile, FileMode.Create))
             {
                 foreach (string inputFile in inputFiles)
                 {

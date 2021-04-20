@@ -11,7 +11,7 @@ namespace LZWArchiver
     {
         private BinaryWriter writer;
 
-        public FileWriter(string filePath, FileMode filemode = FileMode.Create)
+        public FileWriter(string filePath, FileMode filemode = FileMode.OpenOrCreate)
         {
             writer = new FileLoader().LoadFileBinaryWriter(filePath, filemode);
         }
@@ -30,6 +30,27 @@ namespace LZWArchiver
         int filledBits = 0;
         private bool disposedValue = false;
 
+        public void ResetSaved()
+        {
+            if (filledBits != 0)
+            {
+                writer.Write(previous);
+            }
+            filledBits = 0;
+            previous = 0;
+        }
+
+        public void Write64(long a)
+        {
+            if (disposedValue) return;
+            writer.Write(a);
+        }
+        public void Write32(int a)
+        {
+            if (disposedValue) return;
+            writer.Write(a);
+        }
+
         public void WriteBits(int a, int numberOfBits)
         {
             if (disposedValue) return;
@@ -44,7 +65,6 @@ namespace LZWArchiver
                     previous |= (byte)(a >> (numberOfBits - remainingBits) & (0xFF >> (filledBits)));
                     // update 'numberOfBits', 'previous' and output the byte
                     numberOfBits -= remainingBits;
-                    // Console.WriteLine($"Output byte {previous}");
                     writer.Write(previous);
                     previous = 0x00;
                     filledBits = 0;
@@ -53,7 +73,6 @@ namespace LZWArchiver
                 {
                     previous |= (byte)(a << (remainingBits - numberOfBits) & (0xFF >> (filledBits)));
                     filledBits += numberOfBits;
-                    // Console.WriteLine($"This was not enough to output the whole byte... Completed by {numberOfBits} bits");
                     numberOfBits = 0;
                 }
             }

@@ -27,6 +27,16 @@ namespace LZWArchiver
         private byte previous = 0;
         private int saveBits = 0;
 
+        public void ResetSaved()
+        {
+            if (disposedValue)
+            {
+                throw new ObjectDisposedException("object is disposed");
+            }
+            previous = 0;
+            saveBits = 0;
+        }
+
         public int ReadBits(int numberOfBits)
         {
             if (disposedValue)
@@ -52,7 +62,7 @@ namespace LZWArchiver
                     saveBits = -numberOfBits;
                 }
             }
-            while (numberOfBits > 0)//0100101000011111110100000
+            while (numberOfBits > 0)
             {
                 int a = reader.ReadByte();
                 numberOfBits -= 8;
@@ -76,31 +86,55 @@ namespace LZWArchiver
 
         public long GetBytesLeftInFile()
         {
+            if (disposedValue)
+            {
+                throw new ObjectDisposedException("object is disposed");
+            }
             return reader.BaseStream.Length - reader.BaseStream.Position;
         }
 
         public long GetBytesTotalInFile()
         {
+            if (disposedValue)
+            {
+                throw new ObjectDisposedException("object is disposed");
+            }
             return reader.BaseStream.Length;
         }
 
         public long Read64()
         {
+            if (disposedValue)
+            {
+                throw new ObjectDisposedException("object is disposed");
+            }
             return reader.ReadInt64();
         }
 
         public int Read32()
         {
+            if (disposedValue)
+            {
+                throw new ObjectDisposedException("object is disposed");
+            }
             return reader.ReadInt32();
         }
 
         public byte Read8()
         {
+            if (disposedValue)
+            {
+                throw new ObjectDisposedException("object is disposed");
+            }
             return reader.ReadByte();
         }
 
         public bool HasBits(int NumberOfBits)
         {
+            if (disposedValue)
+            {
+                throw new ObjectDisposedException("object is disposed");
+            }
             long leftBytes = GetBytesLeftInFile();
             if (leftBytes*8 + saveBits >= NumberOfBits)
             {
@@ -128,13 +162,6 @@ namespace LZWArchiver
                 disposedValue = true;
             }
         }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~FileWriter()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
 
         public void Dispose()
         {

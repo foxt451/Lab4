@@ -19,8 +19,6 @@ namespace LZWArchiver
             }
             string nameFile = encoding.GetString(listByte.ToArray());
             return (numberBytes, nameFile);
-
-
         }
 
     }

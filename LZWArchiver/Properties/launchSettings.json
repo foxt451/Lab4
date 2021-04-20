@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LZWArchiver": {
+      "commandName": "Project",
+      "commandLineArgs": "--decompress daa.lzw"
+    }
+  }
+}

@@ -16,60 +16,72 @@ namespace LZWArchiver
         // if, at first, the length of the codes is 8 bits per code
         // then, each time the size of the dictionary exceeds 2^wordSizeInBits
         // we add 1 additional bit to the size of the codes
-        private string inputFile, outputFile;
+        private readonly string outputFile;
+        private readonly string[] inputFiles;
+        private readonly Encoding encoding;
 
         
-        public Encoder(string inputFile, string outputFile)
+        public Encoder(string[] inputFiles, string outputFile, Encoding encoding)
         {
-            this.inputFile = inputFile;
+            this.inputFiles = inputFiles;
             this.outputFile = outputFile;
+            this.encoding = encoding;
         }
         public void Encode()
         {
             // FileWriter provides us with a possibility to write not only whole bytes,
             // but, also, any number of bits
-            using (FileWriter output = new(outputFile, FileMode.Append))
-            using (FileReader input = new(inputFile))
+            using (FileWriter output = new(outputFile, FileMode.OpenOrCreate))
             {
-                // current sequence of read bytes
-                List<byte> sequence = new();
-                // read until end of file
-                int bytesRead = 0;
-                while (input.HasBits(8))
+                foreach (string inputFile in inputFiles)
                 {
-                    byte readByte = (byte) input.ReadBits(8);
-                    // debug
-                    bytesRead++;
-                    if (bytesRead % (1024 * 1024) == 0)
+                    codeTable = new();
+                    output.ResetSaved();
+                    FileInfo file = new(inputFile);
+                    using (FileReader input = new(inputFile))
                     {
-                        Console.WriteLine($"Read {bytesRead / (1024 * 1024)} MBs ({(float)bytesRead / input.GetBytesTotalInFile() * 100})%");
-                    }
-                    // add the read byte to the sequence
-                    sequence.Add(readByte);
-                    // if the newly obtained sequence doesn't have its own code yet
-                    if (!codeTable.ContainsKey(sequence))
-                    {
-                        // add new code to codeTable
-                        codeTable.Add(new List<byte>(sequence));
+                        WriteNameAndType.WriteNAT(inputFile, outputFile, encoding, output);
+                        // current sequence of read bytes
+                        List<byte> sequence = new();
+                        // read until end of file
+                        int bytesRead = 0;
+                        while (input.HasBits(8))
+                        {
+                            byte readByte = (byte)input.ReadBits(8);
+                            // debug
+                            bytesRead++;
+                            if (bytesRead % (1024 * 1024) == 0)
+                            {
+                                Console.WriteLine($"Read {bytesRead / (1024 * 1024)} MBs ({(float)bytesRead / input.GetBytesTotalInFile() * 100})%");
+                            }
+                            // add the read byte to the sequence
+                            sequence.Add(readByte);
+                            // if the newly obtained sequence doesn't have its own code yet
+                            if (!codeTable.ContainsKey(sequence))
+                            {
+                                // add new code to codeTable
+                                codeTable.Add(new List<byte>(sequence));
 
-                        // output the word (without the last read byte)
-                        sequence.RemoveAt(sequence.Count - 1);
-                        output.WriteBits(codeTable[sequence], codeTable.wordSizeInBits);
-                        // set the sequence to contain only the last read byte
-                        sequence = new() { readByte };
+                                // output the word (without the last read byte)
+                                sequence.RemoveAt(sequence.Count - 1);
+                                output.WriteBits(codeTable[sequence], codeTable.wordSizeInBits);
+                                // set the sequence to contain only the last read byte
+                                sequence = new() { readByte };
 
-                        codeTable.UpdateWordSize(1, 1);
+                                codeTable.UpdateWordSize(1, 1);
+                            }
+                        }
+
+                        // when we have reached EOF, we still might have some remaining sequence of bytes 
+                        if (sequence.Count != 0)
+                        {
+                            // output the remaining sequence
+                            output.WriteBits(codeTable[sequence], codeTable.wordSizeInBits);
+                        }
+
+                        Console.WriteLine("Encoded!");
                     }
                 }
-
-                // when we have reached EOF, we still might have some remaining sequence of bytes 
-                if (sequence.Count != 0)
-                {
-                    // output the remaining sequence
-                    output.WriteBits(codeTable[sequence], codeTable.wordSizeInBits);
-                }
-
-                Console.WriteLine("Encoded!");
             }
         }
     }

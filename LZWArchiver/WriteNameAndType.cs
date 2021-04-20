@@ -8,21 +8,17 @@ namespace LZWArchiver
 {
     public class WriteNameAndType
     {
-        public static void WriteNAT(string path, string name, string nameOutput, Encoding encoding)
+        public static void WriteNAT(string pathInput, string pathOutput, Encoding encoding, FileWriter writer)
         {
-            FileInfo file = new FileInfo(path + name);
-                long sizeFile = file.Length;
-                using (BinaryWriter writer = new(new FileStream(path + nameOutput, FileMode.Append)))
-                    {
-                        writer.Write(sizeFile);
-                        byte[] NameFile = encoding.GetBytes(name);
-                        writer.Write(NameFile.Length);
-                        for (int j = 0; j < NameFile.Length; j++)
-                        {
-                            writer.Write(NameFile[j]);
-                        }
-                    }
-                }
-                //File.Delete(path + listOfName[i]);
+            FileInfo file = new(pathInput);
+            long sizeFile = file.Length;
+            writer.Write64(sizeFile);
+            byte[] NameFile = encoding.GetBytes(file.Name);
+            writer.Write32(NameFile.Length);
+            for (int j = 0; j < NameFile.Length; j++)
+            {
+                writer.WriteBits(NameFile[j], 8);
             }
         }
+    }
+}

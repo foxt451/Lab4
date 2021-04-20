@@ -16,13 +16,12 @@ namespace LZWArchiver
         // then, each time the size of the dictionary exceeds 2^wordSizeInBits
         // we add 1 additional bit to the size of the codes
 
-        private string inputFile, outputFile;
+        private string inputFile;
         private Encoding encoding;
 
-        public Decoder(string inputFile, string outputFile, Encoding encoding)
+        public Decoder(string inputFile, Encoding encoding)
         {
             this.inputFile = inputFile;
-            this.outputFile = outputFile;
             this.encoding = encoding;
         }
 
@@ -35,69 +34,62 @@ namespace LZWArchiver
                 while(input.HasBits(8))
                 {
                     codeTable = new();
+                    input.ResetSaved();
                     (long numberBytes, string nameFile) = ReadNameAndType.ReadNAT(input, encoding);
-                    outputFile = nameFile;
-                    //Console.WriteLine(numberBytes + " "+nameFile);
+                    string outputFile = nameFile;
 
                     using (FileWriter output = new(outputFile))
                     {
+                        
+                        int readByte = input.ReadBits(codeTable.wordSizeInBits);
                         // current sequence of read bytes
-                            int readByte = input.ReadBits(codeTable.wordSizeInBits);
-                            List<byte> sequence = codeTable[readByte];
-                            //var oBuf = new List<byte>(windw);
-                            foreach (var currentByte in sequence)
-                            {
-                                output.WriteBits(currentByte, 8);
-                            }
-
-                            List<byte> previousSequence = sequence;
-                            int decodedBytes = 1;
-                            // read until end of file
-                            codeTable.UpdateWordSize(0, 0);
-                            while (input.HasBits(codeTable.wordSizeInBits) && decodedBytes < numberBytes)
-                            {
-                                bool reset = codeTable.UpdateWordSize(0, 0);
-                                readByte = input.ReadBits(codeTable.wordSizeInBits);
-                                if (!codeTable.ContainsKey(readByte))
-                                {
-                                    sequence = new(previousSequence)
-                                    {
-                                        previousSequence[0]
-                                    };
-                                }
-                                else
-                                {
-                                    sequence = codeTable[readByte];
-                                }
-
-                                foreach (var seq in sequence)
-                                {
-                                    output.WriteBits(seq, 8);
-
-                                    // debug
-                                    decodedBytes++;
-                                    Console.WriteLine(decodedBytes);
-                                    if (decodedBytes % (1024 * 1024) == 0)
-                                    {
-                                        Console.WriteLine($"Decoded {decodedBytes / (1024 * 1024)} MBs");
-                                    }
-                                }
-
-                                if (!reset)
-                                {
-                                    List<byte> newSequence = new List<byte>(previousSequence);
-                                    newSequence.Add(sequence[0]);
-                                    codeTable.Add(newSequence);
-                                }
-
-                                previousSequence = sequence;
-                                //foreach (var seq in codeTable[readByte])
-                                //{
-                                //sequence.Add(seq);
-                                //}
-                                // if the newly obtained sequence doesn't have its own code yet
-                            }
+                        List<byte> sequence = codeTable[readByte];
+                        foreach (var currentByte in sequence)
+                        {
+                            output.WriteBits(currentByte, 8);
                         }
+                        List<byte> previousSequence = sequence;
+                        int decodedBytes = 1;
+                        codeTable.UpdateWordSize(0, 0);
+                        // read until end of file
+                        while (input.HasBits(codeTable.wordSizeInBits) && decodedBytes < numberBytes)
+                        {
+                            bool reset = codeTable.UpdateWordSize(0, 0);
+                            readByte = input.ReadBits(codeTable.wordSizeInBits);
+                            if (!codeTable.ContainsKey(readByte))
+                            {
+                                sequence = new(previousSequence)
+                                {
+                                    previousSequence[0]
+                                };
+                            }
+                            else
+                            {
+                                sequence = codeTable[readByte];
+                            }
+
+                            foreach (var seq in sequence)
+                            {
+                                output.WriteBits(seq, 8);
+
+                                // debug
+                                decodedBytes++;
+                                if (decodedBytes % (1024 * 1024) == 0)
+                                {
+                                    Console.WriteLine($"Decoded {decodedBytes / (1024 * 1024)} MBs");
+                                }
+                            }
+
+                            if (!reset)
+                            {
+                                List<byte> newSequence = new List<byte>(previousSequence);
+                                newSequence.Add(sequence[0]);
+                                codeTable.Add(newSequence);
+                            }
+
+                            previousSequence = sequence;
+                        }
+                    }
                     
 
                     Console.WriteLine("Decoding complete!");

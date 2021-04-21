@@ -31,16 +31,33 @@ namespace LZWArchiver
             // but, also, any number of bits
             using (FileReader input = new FileReader(inputFile))
             {
-                while(input.HasBits(8))
+                long filesInDirLeft = 0; string dirName = "";
+                bool hasToOverwrite = true;
+                while (input.HasBits(8))
                 {
                     codeTable = new();
                     input.ResetSaved();
-                    (long numberBytes, string nameFile) = ReadNameAndType.ReadNAT(input, encoding);
-                    string outputFile = nameFile;
-
-                    using (FileWriter output = new(outputFile))
+                    (long length, string name, bool isDir) = ReadNameAndType.ReadNAT(input, encoding);
+                    if (isDir)
                     {
-                        
+                        filesInDirLeft = length;
+                        dirName = name;
+                        if (input.HasBits(8))
+                        {
+                            (length, name, isDir) = ReadNameAndType.ReadNAT(input, encoding);
+                        } else
+                        {
+                            continue;
+                        }
+                    }
+                    string outputFile = name;
+
+                    using (FileWriter output = filesInDirLeft > 0 ? new(outputFile, dirName, ref hasToOverwrite) : new(outputFile))
+                    {
+                        if (filesInDirLeft > 0)
+                        {
+                            filesInDirLeft--;
+                        }
                         int readByte = input.ReadBits(codeTable.wordSizeInBits);
                         // current sequence of read bytes
                         List<byte> sequence = codeTable[readByte];
@@ -52,7 +69,7 @@ namespace LZWArchiver
                         int decodedBytes = 1;
                         codeTable.UpdateWordSize(0, 0);
                         // read until end of file
-                        while (input.HasBits(codeTable.wordSizeInBits) && decodedBytes < numberBytes)
+                        while (input.HasBits(codeTable.wordSizeInBits) && decodedBytes < length)
                         {
                             bool reset = codeTable.UpdateWordSize(0, 0);
                             readByte = input.ReadBits(codeTable.wordSizeInBits);

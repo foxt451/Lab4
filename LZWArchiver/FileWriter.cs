@@ -16,6 +16,12 @@ namespace LZWArchiver
             writer = new FileLoader().LoadFileBinaryWriter(filePath, filemode);
         }
 
+        public FileWriter(string filePath, string dirName, ref bool hasToOverwrite, FileMode filemode = FileMode.Create)
+        {
+            writer = new FileLoader().LoadFileBinaryWriter(filePath, dirName, hasToOverwrite, filemode);
+            hasToOverwrite = false;
+        }
+
 
         // in cases when we want to write only 3 bits to file
         // or 12 bits.. we can't do it, because it can't be split into bytes

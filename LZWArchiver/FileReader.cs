@@ -13,6 +13,11 @@ namespace LZWArchiver
             reader = new FileLoader().LoadFileBinaryReader(filePath);
         }
 
+        public FileReader(string filePath, string dirName)
+        {
+            reader = new FileLoader().LoadFileBinaryReader(filePath, dirName);
+        }
+
 
         // in cases when we want to write only 3 bits to file
         // or 12 bits.. we can't do it, because it can't be split into bytes

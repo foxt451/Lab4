@@ -33,53 +33,85 @@ namespace LZWArchiver
             // but, also, any number of bits
             using (FileWriter output = new(outputFile, FileMode.Create))
             {
-                foreach (string inputFile in inputFiles)
+                foreach (string inputLocation in inputFiles)
                 {
                     codeTable = new();
                     output.ResetSaved();
-                    FileInfo file = new(inputFile);
-                    using (FileReader input = new(inputFile))
+                    bool isDir = false;
+                    List<string> inputFiles = new();
+                    DirectoryInfo dir = null;
+                    // it's a folder
+                    if (!inputLocation.Contains("."))
                     {
-                        WriteNameAndType.WriteNAT(inputFile, outputFile, encoding, output);
-                        // current sequence of read bytes
-                        List<byte> sequence = new();
-                        // read until end of file
-                        int bytesRead = 0;
-                        while (input.HasBits(8))
+                        isDir = true;
+                        dir = new(inputLocation);
+                        // init inputFiles
+                        foreach (FileInfo dirFile in dir.GetFiles())
                         {
-                            byte readByte = (byte)input.ReadBits(8);
-                            // debug
-                            bytesRead++;
-                            if (bytesRead % (1024 * 1024) == 0)
-                            {
-                                Console.WriteLine($"Read {bytesRead / (1024 * 1024)} MBs ({(float)bytesRead / input.GetBytesTotalInFile() * 100})%");
-                            }
-                            // add the read byte to the sequence
-                            sequence.Add(readByte);
-                            // if the newly obtained sequence doesn't have its own code yet
-                            if (!codeTable.ContainsKey(sequence))
-                            {
-                                // add new code to codeTable
-                                codeTable.Add(new List<byte>(sequence));
+                            inputFiles.Add(dirFile.Name);
+                        }
+                        WriteNameAndType.WriteDir(dir, encoding, output);
+                    }
+                    // not a folder
+                    else
+                    {
+                        inputFiles.Add(inputLocation);
+                    }
 
-                                // output the word (without the last read byte)
-                                sequence.RemoveAt(sequence.Count - 1);
+                    foreach (string encodedFile in inputFiles)
+                    {
+                        codeTable = new();
+                        output.ResetSaved();
+                        FileInfo file = new(encodedFile);
+                        using (FileReader input = isDir ? new(encodedFile, dir.Name) : new(encodedFile))
+                        {
+                            if (isDir)
+                            {
+                                WriteNameAndType.WriteNAT(dir.FullName + "\\" + encodedFile, encoding, output);
+                            } else
+                            {
+                                WriteNameAndType.WriteNAT(encodedFile, encoding, output);
+                            }
+                            // current sequence of read bytes
+                            List<byte> sequence = new();
+                            // read until end of file
+                            int bytesRead = 0;
+                            while (input.HasBits(8))
+                            {
+                                byte readByte = (byte)input.ReadBits(8);
+                                // debug
+                                bytesRead++;
+                                if (bytesRead % (1024 * 1024) == 0)
+                                {
+                                    Console.WriteLine($"Read {bytesRead / (1024 * 1024)} MBs ({(float)bytesRead / input.GetBytesTotalInFile() * 100})%");
+                                }
+                                // add the read byte to the sequence
+                                sequence.Add(readByte);
+                                // if the newly obtained sequence doesn't have its own code yet
+                                if (!codeTable.ContainsKey(sequence))
+                                {
+                                    // add new code to codeTable
+                                    codeTable.Add(new List<byte>(sequence));
+
+                                    // output the word (without the last read byte)
+                                    sequence.RemoveAt(sequence.Count - 1);
+                                    output.WriteBits(codeTable[sequence], codeTable.wordSizeInBits);
+                                    // set the sequence to contain only the last read byte
+                                    sequence = new() { readByte };
+
+                                    codeTable.UpdateWordSize(1, 1);
+                                }
+                            }
+
+                            // when we have reached EOF, we still might have some remaining sequence of bytes 
+                            if (sequence.Count != 0)
+                            {
+                                // output the remaining sequence
                                 output.WriteBits(codeTable[sequence], codeTable.wordSizeInBits);
-                                // set the sequence to contain only the last read byte
-                                sequence = new() { readByte };
-
-                                codeTable.UpdateWordSize(1, 1);
                             }
-                        }
 
-                        // when we have reached EOF, we still might have some remaining sequence of bytes 
-                        if (sequence.Count != 0)
-                        {
-                            // output the remaining sequence
-                            output.WriteBits(codeTable[sequence], codeTable.wordSizeInBits);
+                            Console.WriteLine("Encoded!");
                         }
-
-                        Console.WriteLine("Encoded!");
                     }
                 }
             }
